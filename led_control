@@ -1,0 +1,104 @@
+
+
+/* Generated driver function for led_controller IP core */
+#include "led_controller.h"
+#include "xparameters.h"
+#include"xil_io.h"
+#include "xgpio.h"
+
+// Define maximum LED value (2^8)-1 = 255
+#define LED_LIMIT 255
+// Define delay length
+#define DELAY 100000000
+
+/* 	Define the base memory address of the led_controller IP core */
+#define LED_BASE XPAR_LED_CONTROLLER_0_S00_AXI_BASEADDR
+
+/* main function */
+int main(void){
+	/* unsigned 32-bit variables for storing current LED value */
+	u32 led_val;
+	int i=0;
+	XGpio dip, push;
+	int psb_check, dip_check;
+
+
+	xil_printf("Ticking Begin\r\n");
+	xil_printf("--------------------------------------------\r\n\n");
+
+
+	XGpio_Initialize(&dip, XPAR_SWITCHES_DEVICE_ID);
+    XGpio_SetDataDirection(&dip, 1, 0xffffffff);
+
+    XGpio_Initialize(&push, XPAR_BUTTONS_DEVICE_ID);
+    XGpio_SetDataDirection(&push, 1, 0xffffffff);
+reset:
+led_val=0;
+		while (1)
+		{
+
+
+		  dip_check = XGpio_DiscreteRead(&dip, 1);
+
+		  if(dip_check != 4 || dip_check != 12)
+			  continue;
+
+		  if(dip_check==12)
+		  {
+			  resetcb:
+			 led_val=255;
+
+
+			while(led_val>=0){
+
+				pauseb:
+				dip_check = XGpio_DiscreteRead(&dip, 1);
+				if(dip_check==6 || dip_check ==14)
+					goto pauseb;
+				else if(dip_check==15)
+					goto reset;
+				else if(dip_check==13)
+					goto resetcb;
+
+				LED_CONTROLLER_mWriteReg(LED_BASE, 0, led_val);
+				led_val--;
+
+			    for(i=0;i<DELAY;i++);
+
+			}}
+             led_val = 255;
+
+
+
+
+			  if(dip_check==4)
+			  		  {  resetcf:
+			  			 led_val=0;
+
+			  		   while(led_val<=255){
+
+							pausef:
+							dip_check = XGpio_DiscreteRead(&dip, 1);
+							if(dip_check==6 || dip_check ==14)
+								goto pausef;
+							else if(dip_check==7)
+								goto reset;
+							else if(dip_check==5)
+								goto resetcf;
+
+			  				LED_CONTROLLER_mWriteReg(LED_BASE, 0, led_val);
+			  				led_val++;
+
+
+			  				for(i=0;i<DELAY;i++);
+
+			  			}
+			               led_val = 0;
+
+
+			  			  }}
+
+
+
+	return 1;
+}
